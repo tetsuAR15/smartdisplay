@@ -126,16 +126,16 @@
     <div class="container mx-auto">
         <div class="flex justify-between items-start px-4">
             <div class="flex-1">
-                <div class="time-display" id="timeDisplay">00:00</div>
-                <div class="date-display mb-4" id="dateDisplay">2023年 1月 1日 (月)</div>
+                <div class="time-display" id="timeDisplay"></div>
+                <div class="date-display mb-4" id="dateDisplay"></div>
             </div>
             <div class="card w-80 text-center">
                 <div class="weather-icon mb-4 flex justify-center">
-                    <div id="weatherIcon">☀️</div>
-                    <div id="weatherTemp" class="text-2xl ml-2">25℃</div>
+                    <div id="weatherIcon"></div>
+                    <div id="weatherTemp" class="text-2xl ml-2"></div>
                 </div>
-                <div id="weatherDesc" class="text-xl mb-4">晴れ</div>
-                <div id="weatherLocation" class="font-bold mb-4">東京</div>
+                <div id="weatherDesc" class="text-xl mb-4"></div>
+                <div id="weatherLocation" class="font-bold mb-4"></div>
                 <div id="weeklyForecast" class="grid grid-cols-7 gap-2">
                     <!-- Weekly forecast items will be added here -->
                 </div>
@@ -144,9 +144,11 @@
 
         <div class="flex px-4">
             <button class="tab-button active" data-tab="calendar">カレンダー</button>
+            <!--
             <button class="tab-button" data-tab="timer">タイマー</button>
             <button class="tab-button" data-tab="alarm">アラーム</button>
             <button class="tab-button" data-tab="messages">メッセージ</button>
+        -->
         </div>
 
         <div class="tab-content active" id="calendarTab">
@@ -183,24 +185,6 @@
                     <button id="setAlarm" class="bg-blue-500 text-white p-2 rounded ml-2">設定</button>
                 </div>
                 <div id="alarmList" class="space-y-2"></div>
-            </div>
-        </div>
-
-        <div class="tab-content" id="messagesTab">
-            <div class="card">
-                <h2 class="text-xl font-bold mb-4">メッセージ</h2>
-                <div id="messagesList">
-                    <div class="p-3 border-b">
-                        <div class="font-bold">新しい通知</div>
-                        <div>配送予定: 注文番号12345が明日配達予定です</div>
-                        <div class="text-sm opacity-70">今日 14:30</div>
-                    </div>
-                    <div class="p-3 border-b">
-                        <div class="font-bold">リマインダー</div>
-                        <div>歯医者の予約: 明日15時</div>
-                        <div class="text-sm opacity-70">昨日 09:15</div>
-                    </div>
-                </div>
             </div>
         </div>
     </div>
