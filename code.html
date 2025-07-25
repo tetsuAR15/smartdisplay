@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Display</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --bg-color: #f5f5f5;
+            --text-color: #333333;
+            --primary-color: #ff9900;
+            --secondary-color: #146eb4;
+            --card-bg: #ffffff;
+        }
+
+        .dark-mode {
+            --bg-color: #222222;
+            --text-color: #f5f5f5;
+            --primary-color: #ff9900;
+            --secondary-color: #146eb4;
+            --card-bg: #333333;
+        }
+
+        body {
+            font-family: 'Amazon Ember', Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: all 0.3s ease;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .time-display {
+            font-size: 4rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .date-display {
+            font-size: 1.5rem;
+            opacity: 0.8;
+        }
+
+        .weather-icon {
+            font-size: 3rem;
+        }
+        .weekly-forecast-item {
+            text-align: center;
+            padding: 8px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 8px;
+        }
+
+        .calendar-container {
+            height: 1000px;
+            overflow-y: auto;
+        }
+
+        .timer-display {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+        }
+
+        .timer-controls button {
+            margin: 0 5px;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+
+        .mode-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+        }
+
+        .tab-button {
+            padding: 10px 20px;
+            border-radius: 20px 20px 0 0;
+            margin-right: 5px;
+            font-weight: bold;
+        }
+
+        .tab-button.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .time-display {
+                font-size: 3rem;
+            }
+            
+            .grid-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen p-0">
+    <div class="mode-toggle ml-4 mt-4">
+        <button id="modeToggle" class="bg-blue-500 text-white p-2 rounded-full">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+            </svg>
+        </button>
+    </div>
+
+    <div class="container mx-auto">
+        <div class="flex justify-between items-start px-4">
+            <div class="flex-1">
+                <div class="time-display" id="timeDisplay">00:00</div>
+                <div class="date-display mb-4" id="dateDisplay">2023年 1月 1日 (月)</div>
+            </div>
+            <div class="card w-80 text-center">
+                <div class="weather-icon mb-4 flex justify-center">
+                    <div id="weatherIcon">☀️</div>
+                    <div id="weatherTemp" class="text-2xl ml-2">25℃</div>
+                </div>
+                <div id="weatherDesc" class="text-xl mb-4">晴れ</div>
+                <div id="weatherLocation" class="font-bold mb-4">東京</div>
+                <div id="weeklyForecast" class="grid grid-cols-7 gap-2">
+                    <!-- Weekly forecast items will be added here -->
+                </div>
+            </div>
+        </div>
+
+        <div class="flex px-4">
+            <button class="tab-button active" data-tab="calendar">カレンダー</button>
+            <button class="tab-button" data-tab="timer">タイマー</button>
+            <button class="tab-button" data-tab="alarm">アラーム</button>
+            <button class="tab-button" data-tab="messages">メッセージ</button>
+        </div>
+
+        <div class="tab-content active" id="calendarTab">
+            <div class="card calendar-container mx-0 rounded-none">
+                <iframe id="googleCalendar" src="https://calendar.google.com/calendar/u/0/embed?src=aa12ar15ksg@gmail.com&ctz=Asia/Tokyo" style="border: 0" width="100%" height="1000" frameborder="0" scrolling="no"></iframe>
+            </div>
+        </div>
+
+        <div class="tab-content" id="timerTab">
+            <div class="card text-center mx-4">
+                <div class="timer-display" id="timerDisplay">00:00:00</div>
+                <div class="timer-controls flex justify-center">
+                    <button id="timerStart" class="bg-green-500 text-white">開始</button>
+                    <button id="timerPause" class="bg-yellow-500 text-white">一時停止</button>
+                    <button id="timerReset" class="bg-red-500 text-white">リセット</button>
+                </div>
+                <div class="mt-4">
+                    <label for="timerHours">時間:</label>
+                    <input type="number" id="timerHours" min="0" max="23" class="w-16 p-1 border rounded">
+                    <label for="timerMinutes">分:</label>
+                    <input type="number" id="timerMinutes" min="0" max="59" class="w-16 p-1 border rounded">
+                    <label for="timerSeconds">秒:</label>
+                    <input type="number" id="timerSeconds" min="0" max="59" class="w-16 p-1 border rounded">
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-content" id="alarmTab">
+            <div class="card">
+                <h2 class="text-xl font-bold mb-4">アラーム設定</h2>
+                <div class="mb-4">
+                    <label for="alarmTime">アラーム時間:</label>
+                    <input type="time" id="alarmTime" class="p-1 border rounded">
+                    <button id="setAlarm" class="bg-blue-500 text-white p-2 rounded ml-2">設定</button>
+                </div>
+                <div id="alarmList" class="space-y-2"></div>
+            </div>
+        </div>
+
+        <div class="tab-content" id="messagesTab">
+            <div class="card">
+                <h2 class="text-xl font-bold mb-4">メッセージ</h2>
+                <div id="messagesList">
+                    <div class="p-3 border-b">
+                        <div class="font-bold">新しい通知</div>
+                        <div>配送予定: 注文番号12345が明日配達予定です</div>
+                        <div class="text-sm opacity-70">今日 14:30</div>
+                    </div>
+                    <div class="p-3 border-b">
+                        <div class="font-bold">リマインダー</div>
+                        <div>歯医者の予約: 明日15時</div>
+                        <div class="text-sm opacity-70">昨日 09:15</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 30分ごとにページを自動更新
+        setInterval(() => {
+            location.reload();
+        }, 1800000); // 30分 = 30 * 60 * 1000 ms
+
+        // モード切り替え
+        const modeToggle = document.getElementById('modeToggle');
+        modeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+        });
+
+        // 時間表示
+        function updateTime() {
+            const now = new Date();
+            const timeDisplay = document.getElementById('timeDisplay');
+            const dateDisplay = document.getElementById('dateDisplay');
+            
+            const hours = now.getHours().toString().padStart(2, '0');
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            
+            timeDisplay.textContent = `${hours}:${minutes}`;
+            
+            const days = ['日', '月', '火', '水', '木', '金', '土'];
+            const day = days[now.getDay()];
+            dateDisplay.textContent = `${now.getFullYear()}年 ${now.getMonth() + 1}月 ${now.getDate()}日 (${day})`;
+        }
+        
+        setInterval(updateTime, 1000);
+        updateTime();
+
+        // タブ切り替え
+        const tabButtons = document.querySelectorAll('.tab-button');
+        const tabContents = document.querySelectorAll('.tab-content');
+        
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const tabId = button.getAttribute('data-tab');
+                
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                tabContents.forEach(content => content.classList.remove('active'));
+                
+                button.classList.add('active');
+                document.getElementById(`${tabId}Tab`).classList.add('active');
+            });
+        });
+
+        // タイマー機能
+        let timerInterval;
+        let timerSeconds = 0;
+        const timerDisplay = document.getElementById('timerDisplay');
+        const timerStartBtn = document.getElementById('timerStart');
+        const timerPauseBtn = document.getElementById('timerPause');
+        const timerResetBtn = document.getElementById('timerReset');
+        
+        timerStartBtn.addEventListener('click', () => {
+            const hours = parseInt(document.getElementById('timerHours').value) || 0;
+            const minutes = parseInt(document.getElementById('timerMinutes').value) || 0;
+            const seconds = parseInt(document.getElementById('timerSeconds').value) || 0;
+            
+            timerSeconds = hours * 3600 + minutes * 60 + seconds;
+            
+            if (timerSeconds <= 0) return;
+            
+            clearInterval(timerInterval);
+            
+            updateTimerDisplay();
+            
+            timerInterval = setInterval(() => {
+                timerSeconds--;
+                updateTimerDisplay();
+                
+                if (timerSeconds <= 0) {
+                    clearInterval(timerInterval);
+                    alert('タイマー終了');
+                }
+            }, 1000);
+        });
+        
+        timerPauseBtn.addEventListener('click', () => {
+            clearInterval(timerInterval);
+        });
+        
+        timerResetBtn.addEventListener('click', () => {
+            clearInterval(timerInterval);
+            timerSeconds = 0;
+            updateTimerDisplay();
+        });
+        
+        function updateTimerDisplay() {
+            const hours = Math.floor(timerSeconds / 3600);
+            const minutes = Math.floor((timerSeconds % 3600) / 60);
+            const seconds = timerSeconds % 60;
+            
+            timerDisplay.textContent = 
+                `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        // アラーム機能
+        const alarmTimeInput = document.getElementById('alarmTime');
+        const setAlarmBtn = document.getElementById('setAlarm');
+        const alarmList = document.getElementById('alarmList');
+        
+        setAlarmBtn.addEventListener('click', () => {
+            const alarmTime = alarmTimeInput.value;
+            
+            if (!alarmTime) return;
+            
+            const alarmItem = document.createElement('div');
+            alarmItem.className = 'flex justify-between items-center p-2 border rounded';
+            
+            alarmItem.innerHTML = `
+                <span>${alarmTime}</span>
+                <button class="delete-alarm bg-red-500 text-white p-1 rounded text-xs">削除</button>
+            `;
+            
+            alarmList.appendChild(alarmItem);
+            
+            const deleteBtn = alarmItem.querySelector('.delete-alarm');
+            deleteBtn.addEventListener('click', () => {
+                alarmItem.remove();
+            });
+            
+            alarmTimeInput.value = '';
+        });
+
+        // 天気データ取得（宮崎県宮崎市、週間予報）
+        const weatherCodeMap = {
+            0: '☀️', // Clear sky
+            1: '🌤️', // Mainly clear
+            2: '⛅', // Partly cloudy
+            3: '☁️', // Overcast
+            45: '🌫️', // Fog
+            48: '🌫️', // Depositing rime fog
+            51: '🌧️', // Drizzle: Light
+            53: '🌧️', // Drizzle: Moderate
+            55: '🌧️', // Drizzle: Dense intensity
+            56: '🌨️', // Freezing Drizzle: Light
+            57: '🌨️', // Freezing Drizzle: Dense intensity
+            61: '🌧️', // Rain: Slight
+            63: '🌧️', // Rain: Moderate
+            65: '🌧️', // Rain: Heavy intensity
+            66: '🌨️', // Freezing Rain: Light
+            67: '🌨️', // Freezing Rain: Heavy intensity
+            71: '❄️', // Snow fall: Slight
+            73: '❄️', // Snow fall: Moderate
+            75: '❄️', // Snow fall: Heavy intensity
+            77: '🌨️', // Snow grains
+            80: '⛈️', // Rain showers: Slight
+            81: '⛈️', // Rain showers: Moderate
+            82: '⛈️', // Rain showers: Violent
+            85: '🌨️', // Snow showers: Slight
+            86: '🌨️', // Snow showers: Heavy
+            95: '⚡', // Thunderstorm: Slight or moderate
+            96: '⚡', // Thunderstorm with slight hail
+            99: '⚡'  // Thunderstorm with heavy hail
+        };
+
+        function getWeatherIcon(weathercode) {
+            return weatherCodeMap[weathercode] || '❓'; // Default to question mark for unknown codes
+        }
+
+        fetch('https://api.open-meteo.com/v1/forecast?latitude=31.9111&longitude=131.4239&current_weather=true&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=Asia%2FTokyo')
+            .then(response => response.json())
+            .then(data => {
+                // 現在の天気
+                document.getElementById('weatherTemp').textContent = `${data.current_weather.temperature}℃`;
+                document.getElementById('weatherIcon').textContent = getWeatherIcon(data.current_weather.weathercode);
+                document.getElementById('weatherDesc').textContent = getWeatherDescription(data.current_weather.weathercode);
+                document.getElementById('weatherLocation').textContent = '宮崎市';
+
+                // 週間予報
+                const weeklyForecastDiv = document.getElementById('weeklyForecast');
+                weeklyForecastDiv.innerHTML = ''; // Clear previous content
+
+                const daysOfWeek = ['日', '月', '火', '水', '木', '金', '土'];
+                data.daily.time.forEach((dateString, index) => {
+                    const date = new Date(dateString);
+                    const dayName = daysOfWeek[date.getDay()];
+                    const maxTemp = data.daily.temperature_2m_max[index];
+                    const minTemp = data.daily.temperature_2m_min[index];
+                    const weathercode = data.daily.weathercode[index];
+
+                    const forecastItem = document.createElement('div');
+                    forecastItem.className = 'weekly-forecast-item';
+                    forecastItem.innerHTML = `
+                        <div class="text-sm">${dayName}</div>
+                        <div class="text-xl">${getWeatherIcon(weathercode)}</div>
+                        <div class="text-xs">${Math.round(maxTemp)}° / ${Math.round(minTemp)}°</div>
+                    `;
+                    weeklyForecastDiv.appendChild(forecastItem);
+                });
+            })
+            .catch(err => {
+                console.error('天気情報の取得に失敗しました:', err);
+                document.getElementById('weatherTemp').textContent = 'N/A';
+                document.getElementById('weatherIcon').textContent = '❓';
+                document.getElementById('weatherDesc').textContent = '取得失敗';
+                document.getElementById('weatherLocation').textContent = '宮崎市';
+            });
+
+        // Weather code to description mapping (simplified)
+        function getWeatherDescription(weathercode) {
+            switch (weathercode) {
+                case 0: return '快晴';
+                case 1: return '晴れ';
+                case 2: return '一部曇り';
+                case 3: return '曇り';
+                case 45:
+                case 48: return '霧';
+                case 51:
+                case 53:
+                case 55: return '霧雨';
+                case 56:
+                case 57: return '着氷性の霧雨';
+                case 61:
+                case 63:
+                case 65: return '雨';
+                case 66:
+                case 67: return '着氷性の雨';
+                case 71:
+                case 73:
+                case 75: return '雪';
+                case 77: return '雪の粒';
+                case 80:
+                case 81:
+                case 82: return 'にわか雨';
+                case 85:
+                case 86: return 'にわか雪';
+                case 95:
+                case 96:
+                case 99: return '雷雨';
+                default: return '不明';
+            }
+        }
+
+        // Googleカレンダー埋め込み
+        function refreshCalendar() {
+            const calendar = document.getElementById('googleCalendar');
+            calendar.src = calendar.src;
+        }
+        
+        // 毎正時にカレンダーをリフレッシュ
+        setTimeout(() => {
+            refreshCalendar();
+            setInterval(refreshCalendar, 3600000); // 1時間ごと
+        }, (60 - new Date().getMinutes()) * 60000);
+    </script>
+</body>
+</html>
